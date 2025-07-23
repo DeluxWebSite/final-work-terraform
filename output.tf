@@ -10,12 +10,10 @@ output "security_group_id" {
   value = yandex_vpc_security_group.network-1-sg.id
 }
 
-output "instance_private_ip" {
-  description = "Compute instance private IP"
-  value       = yandex_compute_instance.vm-[*].network_interface[0].ip_address
+output "public_ip" {
+   value = yandex_compute_instance.vm[*].network_interface.0.nat_ip_address
 }
 
-output "instance_public_ip" {
-  description = "Compute instance public IP"
-  value = yandex_compute_instance.vm-[*].network_interface.0.nat_ip_address
+output "private_ip" {
+   value = yandex_compute_instance.vm[*].network_interface.0.ip_address
 }

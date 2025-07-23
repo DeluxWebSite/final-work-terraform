@@ -7,7 +7,7 @@ resource "yandex_compute_instance" "vm" {
   name        = "vm-${count.index}"
   zone        = var.default_zone
   platform_id = var.platform_standard-v3
-  depends_on  = [yandex_mdb_postgresql_cluster.mysql-cloud]
+  depends_on  = [yandex_mdb_mysql_cluster.mysql-cloud]
 
   resources {
     cores         = var.cores # Минимальное значение vCPU = 2. ccылка: https://cloud.yandex.ru/docs/compute/concepts/performance-levels
@@ -38,15 +38,15 @@ resource "yandex_compute_instance" "vm" {
     user-data = "${file("cloud-init.yml")}"
   }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [boot_disk]
-  }
+#  lifecycle {
+#    prevent_destroy = true
+#    ignore_changes = [boot_disk]
+#  }
 
   connection {
     type        = "ssh"
     user        = "user"
-#    private_key = file("~/.ssh/id_ed25519")
+    private_key = file("~/.ssh/id_ed25519")
     host        = self.network_interface[0].nat_ip_address
   }
 
@@ -54,7 +54,7 @@ resource "yandex_compute_instance" "vm" {
   inline = [
 <<EOT
 sudo docker run -d -p 0.0.0.0:80:3000 \
-  -e DB_TYPE=postgres \
+  -e DB_TYPE=mysql \
   -e DB_NAME=${var.db-name} \
   -e DB_HOST=${yandex_mdb_mysql_cluster.mysql-cloud.host.0.fqdn} \
   -e DB_PORT=6432 \
@@ -87,22 +87,41 @@ resource "yandex_mdb_mysql_cluster" "mysql-cloud" {
   host {
     zone      = var.default_zone
     subnet_id = yandex_vpc_subnet.subnet-1.id
-#    assign_public_ip = false
+#   assign_public_ip = false
   }
 }
 
 resource "yandex_mdb_mysql_database" "my_db" {
   cluster_id = yandex_mdb_mysql_cluster.mysql-cloud.id
   name       = var.db-name
-  owner      = yandex_mdb_postgresql_user.my_user.name
-  lc_collate = "en_US.UTF-8"
-  lc_type    = "en_US.UTF-8"
-  depends_on  = [yandex_mdb_postgresql_cluster.mysql-cloud]
+  depends_on  = [yandex_mdb_mysql_cluster.mysql-cloud]
 }
 
 resource "yandex_mdb_mysql_user" "my_user" {
   cluster_id = yandex_mdb_mysql_cluster.mysql-cloud.id
   name       = var.db-user
   password   = var.pass-db
-  depends_on  = [yandex_mdb_postgresql_cluster.mysql-cloud]
+  depends_on  = [yandex_mdb_mysql_cluster.mysql-cloud]
+
+  permission {
+    database_name = yandex_mdb_mysql_database.my_db.name
+    roles         = ["ALL"]
+  }
+
+#  permission {
+#    database_name = yandex_mdb_mysql_database.my_db.name
+#    roles         = ["ALL", "INSERT"]
+#  }
+
+  connection_limits {
+    max_questions_per_hour   = 10
+    max_updates_per_hour     = 20
+    max_connections_per_hour = 30
+    max_user_connections     = 40
+  }
+
+  global_permissions = ["PROCESS"]
+
+  authentication_plugin = "SHA256_PASSWORD"
 }
+
