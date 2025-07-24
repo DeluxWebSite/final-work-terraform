@@ -46,26 +46,18 @@ resource "yandex_compute_instance" "vm" {
 
 
 
-    provisioner "file" {
-    source      = "./app"
-    destination = "/app"
-  }
+#    provisioner "file" {
+#    source      = "app/src/"
+#    destination = "/var/www/html"
+#  }
 
-  provisioner "remote-exec" {
-  inline = [
-  <<EOT
-cd app/ && docker build -t my-app .
-  EOT
-    ]
-  }
-
-   provisioner "remote-exec" {
-  inline = [
-  <<EOT
-cd app/ && docker run -d -p 80:80 --name my-container my-app
-  EOT
-    ]
-  }
+#  provisioner "remote-exec" {
+#  inline = [
+#  <<EOT
+#  cd app/ && docker build -t my-app .
+#  EOT
+#    ]
+#  }
 
 }
 
@@ -123,14 +115,10 @@ resource "yandex_mdb_mysql_user" "my_user" {
   authentication_plugin = "SHA256_PASSWORD"
 }
 
-resource "yandex_container_registry" "container_registry" {
-  name      = "container_registry"
-
-  labels = {
-    my-label = "my-label-value"
-  }
+resource "yandex_container_registry" "container-registry" {
+  name      = "container-registry"
 }
 
 resource "yandex_container_repository" "cloud-repository" {
-  name = "${yandex_container_registry.container_registry.id}/cloud-repository"
+  name = "${yandex_container_registry.container-registry.id}/cloud-repository"
 }

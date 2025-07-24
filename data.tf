@@ -10,10 +10,6 @@ data "yandex_lb_target_group" "my_tg" {
   target_group_id = "my-target-group-id"
 }
 
-data "yandex_mdb_mysql_cluster" "my_cluster" {
-  name = "mysql-cloud"
-}
-
 data "yandex_mdb_mysql_user" "my_user" {
   cluster_id = yandex_mdb_mysql_cluster.mysql-cloud.id
   name = var.db-user

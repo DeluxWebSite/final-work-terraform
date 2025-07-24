@@ -18,10 +18,6 @@ output "private_ip" {
   value = yandex_compute_instance.vm.network_interface.0.ip_address
 }
 
-output "network_id" {
-  value = data.yandex_mdb_mysql_cluster.my_cluster.network_id
-}
-
 output "permission" {
   value = data.yandex_mdb_mysql_user.my_user.permission
 }
@@ -39,12 +35,12 @@ output "hosts_fqdns" {
 }
 
 resource "local_file" "env_file" {
-  filename = "/app/src/.env"
+  filename = "${path.module}/app/src/.env"
   content  = <<EOT
 DB_HOST=c-${yandex_mdb_mysql_cluster.mysql-cloud.id}.rw.mdb.yandexcloud.net
 DB_PORT=6432
-DB_USER=${yandex_mdb_mysql_cluster.mysql-cloud.name}
-DB_PASSWORD=${yandex_mdb_mysql_cluster.mysql-cloud.password}
-DB_NAME=${yandex_mdb_mysql_cluster.mysql-cloud.name}
+DB_USER=${yandex_mdb_mysql_user.my_user.name}
+DB_PASSWORD=${yandex_mdb_mysql_user.my_user.password}
+DB_NAME=${yandex_mdb_mysql_database.my_db.name}
 EOT
 }
