@@ -1,10 +1,5 @@
-data "yandex_compute_image" "img" {
-  family = "ubuntu-2204-lts"
-}
-
 resource "yandex_compute_instance" "vm" {
-  count       = var.count-vm
-  name        = "vm-${count.index}"
+  name        = "vm"
   zone        = var.default_zone
   platform_id = var.platform_standard-v3
   depends_on  = [yandex_mdb_mysql_cluster.mysql-cloud]
@@ -30,7 +25,6 @@ resource "yandex_compute_instance" "vm" {
   network_interface {
     subnet_id          = yandex_vpc_subnet.subnet-1.id
     nat                = true
-#   ip_address         = "192.168.1.11"
     security_group_ids = [yandex_vpc_security_group.network-1-sg.id]
   }
 
@@ -50,20 +44,29 @@ resource "yandex_compute_instance" "vm" {
     host        = self.network_interface[0].nat_ip_address
   }
 
+
+
+    provisioner "file" {
+    source      = "./app"
+    destination = "/app"
+  }
+
   provisioner "remote-exec" {
   inline = [
-<<EOT
-sudo docker run -d -p 0.0.0.0:80:3000 \
-  -e DB_TYPE=mysql \
-  -e DB_NAME=${var.db-name} \
-  -e DB_HOST=${yandex_mdb_mysql_cluster.mysql-cloud.host.0.fqdn} \
-  -e DB_PORT=6432 \
-  -e DB_USER=${var.db-user} \
-  -e DB_PASS=${var.pass-db} \
-  ghcr.io/requarks/wiki:2.5
-EOT
+  <<EOT
+cd app/ && docker build -t my-app .
+  EOT
     ]
   }
+
+   provisioner "remote-exec" {
+  inline = [
+  <<EOT
+cd app/ && docker run -d -p 80:80 --name my-container my-app
+  EOT
+    ]
+  }
+
 }
 
 resource "yandex_mdb_mysql_cluster" "mysql-cloud" {
@@ -87,7 +90,7 @@ resource "yandex_mdb_mysql_cluster" "mysql-cloud" {
   host {
     zone      = var.default_zone
     subnet_id = yandex_vpc_subnet.subnet-1.id
-#   assign_public_ip = false
+    assign_public_ip = false
   }
 }
 
@@ -108,11 +111,6 @@ resource "yandex_mdb_mysql_user" "my_user" {
     roles         = ["ALL"]
   }
 
-#  permission {
-#    database_name = yandex_mdb_mysql_database.my_db.name
-#    roles         = ["ALL", "INSERT"]
-#  }
-
   connection_limits {
     max_questions_per_hour   = 10
     max_updates_per_hour     = 20
@@ -125,3 +123,14 @@ resource "yandex_mdb_mysql_user" "my_user" {
   authentication_plugin = "SHA256_PASSWORD"
 }
 
+resource "yandex_container_registry" "container_registry" {
+  name      = "container_registry"
+
+  labels = {
+    my-label = "my-label-value"
+  }
+}
+
+resource "yandex_container_repository" "cloud-repository" {
+  name = "${yandex_container_registry.container_registry.id}/cloud-repository"
+}

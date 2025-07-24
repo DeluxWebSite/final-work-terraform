@@ -9,6 +9,5 @@ users:
 package_update: true
 package_upgrade: false
 packages:
-  - nginx
   - docker
   - docker compose
