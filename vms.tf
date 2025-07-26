@@ -44,20 +44,44 @@ resource "yandex_compute_instance" "vm" {
     host        = self.network_interface[0].nat_ip_address
   }
 
-
-
-#    provisioner "file" {
-#    source      = "app/src/"
-#    destination = "/var/www/html"
-#  }
-
 #  provisioner "remote-exec" {
-#  inline = [
-#  <<EOT
-#  cd app/ && docker build -t my-app .
-#  EOT
+#    inline = [
+#      <<EOT
+#        sudo mkdir app
+#      EOT
 #    ]
 #  }
+
+#  provisioner "file" {
+#    source      = "app/"
+#    destination = "/app/"
+#  }
+
+  provisioner "remote-exec" {
+  inline = [
+  <<EOT
+  cd app/ && docker build -t app .
+  EOT
+    ]
+  }
+
+  provisioner "remote-exec" {
+  inline = [
+  <<EOT
+   cd app/ && docker run --rm -p 80:80  --name my-app app
+  EOT
+    ]
+  }
+
+    provisioner "remote-exec" {
+  inline = [
+  <<EOT
+   cd app/ && docker push cr.yandex/${yandex_container_registry.container-registry.id}/cloud-repository:my-app
+  EOT
+    ]
+  }
+
+
 
 }
 

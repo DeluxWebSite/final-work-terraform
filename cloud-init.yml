@@ -9,11 +9,9 @@ users:
 package_update: true
 package_upgrade: true
 packages:
-  - nginx
   - docker
   - docker compose
-
 runcmd:
-  - mkdir -p /var/www/html
-  - cp -r /app/src/ /var/www/html
-  - systemctl restart nginx
+  - mkdir -p /app
+  - cp -r /app/ /app/
+#  - systemctl restart nginx

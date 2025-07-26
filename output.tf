@@ -27,15 +27,15 @@ output "cluster_fqdn" {
   value       = "c-${yandex_mdb_mysql_cluster.mysql-cloud.id}.rw.mdb.yandexcloud.net"
 }
 
-output "hosts_fqdns" {
-  description = "FQDNs of all cluster hosts"
-  value       = [
-    for host in yandex_mdb_mysql_cluster.mysql-cloud.host : host.fqdn
-  ]
-}
+# output "hosts_fqdns" {
+#  description = "FQDNs of all cluster hosts"
+#  value       = [
+#    for host in yandex_mdb_mysql_cluster.mysql-cloud.host : host.fqdn
+#  ]
+# }
 
 resource "local_file" "env_file" {
-  filename = "${path.module}/app/src/.env"
+  filename = "${path.module}/app/.env"
   content  = <<EOT
 DB_HOST=c-${yandex_mdb_mysql_cluster.mysql-cloud.id}.rw.mdb.yandexcloud.net
 DB_PORT=6432

@@ -1,0 +1,41 @@
+include:
+  - proxy.yaml
+
+services:
+  #  db:
+  #    image: mysql:8
+  #    restart: on-failure
+  #    env_file:
+  #      - .env
+  #    volumes:
+  #      - /var/lib/docker/volumes/db_mysql/_data:/var/lib/mysql
+  #    ports:
+  #      - 3306:3306
+  #    networks:
+  #      backend:
+  #        ipv4_address: 172.20.0.10
+
+  web:
+    build:
+      dockerfile: Dockerfile
+    restart: on-failure
+    env_file:
+      - .env
+    #    environment:
+    #      - DB_HOST=db
+    #      - DB_TABLE=requests
+    #      - DB_USER=test_user
+    #      - DB_NAME=test_db
+    #      - DB_PASSWORD=test_password
+    depends_on:
+      - db
+    networks:
+      backend:
+        ipv4_address: 172.20.0.5
+
+networks:
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
